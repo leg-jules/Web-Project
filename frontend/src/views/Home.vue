@@ -16,7 +16,6 @@
 </template>
 
 <script setup>
-// Pas de logique supplémentaire nécessaire
 </script>
 
 <style scoped>

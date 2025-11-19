@@ -6,6 +6,7 @@ const cors = require('cors');
 const { sequelize } = require('./models');
 
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin'); 
 
 const app = express();
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
@@ -13,15 +14,18 @@ app.use(express.json());
 
 const store = new SequelizeStore({ db: sequelize });
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'devsecret',
-  store,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 }
+  secret: process.env.SESSION_SECRET || 'devsecret',
+  store,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 store.sync();
 
 app.use('/api/auth', authRoutes);
+
+app.use('/api/admin', adminRoutes); 
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
