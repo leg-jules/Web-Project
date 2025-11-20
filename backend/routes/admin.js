@@ -13,4 +13,11 @@ router.put('/users/:id', adminController.updateUser);
 
 router.delete('/users/:id', adminController.deleteUser);
 
+router.get('/appointments', adminController.getAppointments);
+
+router.get('/clients', adminController.getClients);
+router.post('/appointments', adminController.createAppointment);
+
+router.put('/appointments/:id', adminController.updateAppointment);
+router.delete('/appointments/:id', adminController.deleteAppointment);
 module.exports = router;

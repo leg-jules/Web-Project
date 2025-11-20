@@ -24,14 +24,16 @@ const submit = async () => {
     console.log("Rôle utilisateur lu par le frontend :", userRole); 
 
     if (userRole === 'admin') {
-      alert(`Connecté en tant qu'administrateur ! Redirection vers le tableau de bord admin...`);
+      alert(`Logged in as administrator! Redirecting to the admin dashboard...`);
       router.push('/admin-dashboard');
-    } else if (userRole === 'normal') {
-      alert('Connecté en tant qu\'utilisateur normal ! Redirection vers le tableau de bord utilisateur...');
-      router.push('/dashboard');
+    } else if (userRole === 'employee') {
+      alert('Logged in as employee! Redirecting to the employee dashboard...');
+      router.push('/employee-dashboard');
+      } else if (userRole === 'client') {
+      alert('Logged in as client! Redirecting to the client dashboard...');
+      router.push('/client-dashboard');
     } else {
-      alert(`Connecté ! Rôle inconnu (${userRole}). Redirection par défaut...`); 
-      router.push('/dashboard'); 
+      alert(`You do not have an assigned role. Contact the admin.`); 
     }
 
   } catch (e) {

@@ -3,13 +3,14 @@ import Home from '../views/Home.vue';
 import Register from '../components/Auth/Register.vue';
 import Login from '../components/Auth/Login.vue';
 import AdminDashboard from '../views/AdminDashboard.vue';
+import AdminPlanning from '../views/AdminPlanning.vue';
 
 const routes = [
   { path: '/', component: Home },
   { path: '/register', component: Register },
   { path: '/login', component: Login },
-  { path: '/admin-dashboard', component: AdminDashboard, meta:{requiresAuth: true, requiredRole: 'admin'} }
-
+  { path: '/admin-dashboard', component: AdminDashboard, meta:{requiresAuth: true, requiredRole: 'admin'} },
+  { path: '/admin-planning', component: AdminPlanning, meta:{requiresAuth: true, requiredRole: 'admin'} }
 ];
 
 const router = createRouter({

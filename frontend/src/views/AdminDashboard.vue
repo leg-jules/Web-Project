@@ -11,8 +11,9 @@
         <select v-model="newUser.users_type" required>
           <option disabled value="">Select a role</option>
           <option value="admin">Administrator</option>
-          <option value="normal">normal</option>
-        </select>
+          <option value="employee">Employee</option>
+          <option value="client">Client</option>
+        </select>          
         <button type="submit">Add User</button>
       </form>
     </section>
@@ -49,8 +50,9 @@
             <td>
               <span v-if="!user.isEditing">{{ user.users_type }}</span>
               <select v-else v-model="user.users_type">
-                <option value="admin">admin</option>
-                <option value="normal">normal</option>
+                  <option value="admin">Administrator</option>
+                  <option value="employee">Employee</option>
+                  <option value="client">Client</option>
               </select>
             </td>
             
