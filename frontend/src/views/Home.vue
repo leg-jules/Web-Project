@@ -23,9 +23,6 @@
           <RouterLink to="/register" class="btn-primary">
             Start for free
           </RouterLink>
-          <RouterLink to="/login" class="btn-secondary">
-            View demo
-          </RouterLink>
         </div>
 
         <div class="trust-badges">
