@@ -32,9 +32,7 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th @click="sort('id')" class="sortable">
-                ID <span v-if="currentSort === 'id'">{{ currentSortDir === 'asc' ? '⬇' : '⬆' }}</span>
-              </th>
+                <th>ID</th>
               <th @click="sort('username')" class="sortable">
                 Name <span v-if="currentSort === 'username'">{{ currentSortDir === 'asc' ? '⬇' : '⬆' }}</span>
               </th>
