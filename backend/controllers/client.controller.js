@@ -5,7 +5,7 @@ const Client = db.Client;
 const Appointment = db.Appointment;
 const { Op } = require('sequelize');
 
-=exports.getEmployees = async (req, res) => {
+exports.getEmployees = async (req, res) => {
     try {
         const workers = await Worker.findAll({
             attributes: ['Worker_ID', 'Worker_FirstName', 'Worker_LastName']
