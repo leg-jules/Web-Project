@@ -16,22 +16,42 @@
           <button :class="{ active: currentTab === 'planning' }" @click="switchToPlanning">Planning & Appointments</button>
       </div>
 
-      <!-- SECTION UTILISATEURS -->
       <section v-if="currentTab === 'users'" class="tab-content">
         <div class="card add-section">
           <h2>Add New User</h2>
-          <form @submit.prevent="addUser" class="inline-form">
-            <input v-model="newUser.username" placeholder="Username" required />
-            <input v-model="newUser.email" type="email" placeholder="Email" required />
-            <input v-model="newUser.password" type="password" placeholder="Password" required />
-            <select v-model="newUser.users_type" required>
-               <option disabled value="">Select Role</option>
-               <option value="admin">Administrator</option>
-               <option value="employee">Employee</option>
-               <option value="client">Client</option>
-            </select>
-            <button type="submit" class="btn-primary">Add</button>
-          </form>
+          <form @submit.prevent="addUser" class="inline-form-extended">
+            <div class="form-group">
+                <input v-model="newUser.email" type="email" placeholder="Email" required />
+                <input v-model="newUser.password" type="password" placeholder="Password" required />
+                <select v-model="newUser.users_type" required>
+                    <option disabled value="">Select Role</option>
+                    <option value="admin">Administrator</option>
+                    <option value="worker">Employee</option> <option value="client">Client</option>
+                </select>
+            </div>
+
+            <div v-if="newUser.users_type === 'worker' || newUser.users_type === 'client'" class="extended-fields">
+                <hr>
+                <p><strong>Profile Details:</strong></p>
+                <div class="form-row-compact">
+                    <input v-model="newUser.firstName" type="text" placeholder="First Name" required />
+                    <input v-model="newUser.lastName" type="text" placeholder="Last Name" required />
+                </div>
+                <div class="form-row-compact">
+                    <input v-model="newUser.phone" type="text" placeholder="Phone" required />
+                    <input v-model="newUser.address" type="text" placeholder="Address" required />
+                </div>
+                <div v-if="newUser.users_type === 'client'" class="form-row-compact">
+                  <div class="form-group">
+                    <label>Hourly Rate (€):</label>
+                    <input v-model="newUser.hourlyRate" type="number" step="0.01" placeholder="Ex: 50.00" />
+                  </div>
+                </div>
+                <div v-if="newUser.users_type === 'client'" class="form-row-compact"></div>
+            </div>
+
+            <button type="submit" class="btn-primary full-width">Create User & Profile</button>
+          </form>        
         </div>
 
         <div class="card list-section">
@@ -41,7 +61,6 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th @click="sort('username')" class="sortable">Name <span v-if="currentSort === 'username'">{{ currentSortDir === 'asc' ? '⬇' : '⬆' }}</span></th>
                 <th @click="sort('email')" class="sortable">Email <span v-if="currentSort === 'email'">{{ currentSortDir === 'asc' ? '⬇' : '⬆' }}</span></th>
                 <th @click="sort('users_type')" class="sortable">Role <span v-if="currentSort === 'users_type'">{{ currentSortDir === 'asc' ? '⬇' : '⬆' }}</span></th>
                 <th>Actions</th>
@@ -50,10 +69,6 @@
             <tbody>
               <tr v-for="user in sortedUsers" :key="user.id">
                   <td>{{ user.id }}</td>
-                  <td>
-                    <span v-if="!user.isEditing">{{ user.username }}</span>
-                    <input v-else v-model="user.username" class="edit-input"/>
-                  </td>
                   <td>
                     <span v-if="!user.isEditing">{{ user.email }}</span>
                     <input v-else v-model="user.email" type="email" class="edit-input"/>
@@ -82,64 +97,68 @@
         </div>
       </section>
 
-      <!-- SECTION PLANNING -->
-      <section v-if="currentTab === 'planning'" class="tab-content">
-          <div class="card add-section">
-              <h2>Schedule an Appointment</h2>
-              <form @submit.prevent="addAppointment" class="appointment-form">
-                  <div class="form-row">
-                      <div class="form-group">
-                          <label>Employee:</label>
-                          <select v-model="newAppointment.employeeId" required>
-                              <option disabled value="">Select...</option>
-                              <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.title }}</option>
-                          </select>
-                      </div>
-                      <div class="form-group">
-                          <label>Client:</label>
-                          <select v-model="newAppointment.clientId" required>
-                              <option disabled value="">Select...</option>
-                              <option v-for="cl in clients" :key="cl.id" :value="cl.id">{{ cl.name }}</option>
-                          </select>
-                      </div>
-                      <div class="form-group flex-grow">
-                          <label>Description:</label>
-                          <input v-model="newAppointment.description" placeholder="e.g., Haircut + Beard" required />
-                      </div>
-                  </div>
-                  <div class="form-row">
-                      <div class="form-group">
-                          <label>Start:</label>
-                          <input v-model="newAppointment.startTime" type="datetime-local" required />
-                      </div>
-                      <div class="form-group">
-                          <label>End:</label>
-                          <input v-model="newAppointment.endTime" type="datetime-local" required />
-                      </div>
-                      <div class="form-group button-container">
-                          <button type="submit" class="btn-primary">Create Appointment</button>
-                      </div>
-                  </div>
-              </form>
-          </div>
-
-          <div class="card calendar-section">
-              <div class="filter-controls">
-                  <label><strong>Filter by Employee:</strong> </label>
-                  <select v-model="selectedEmployeeId" @change="handleEmployeeChange">
-                      <option value="">View all employees</option>
-                      <option v-for="emp in employees" :key="emp.id" :value="emp.id">{{ emp.title }}</option>
+<section v-if="currentTab === 'planning'" class="tab-content">
+  <div class="card add-section">
+      <h2>Schedule an Appointment</h2>
+      <form @submit.prevent="addAppointment" class="appointment-form">
+          <div class="form-row">
+              <div class="form-group">
+                  <label>Worker (Employee):</label>
+                  <select v-model="newAppointment.workerId" required>
+                      <option disabled value="">Select...</option>
+                      <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                        {{ emp.title }}
+                      </option>
                   </select>
               </div>
-              <hr>
-              <FullCalendar 
-                  ref="fullCalendarRef"
-                  :options="calendarOptions"
-                  class="full-calendar-custom"
-              />
-              <p class="hint">ℹTip: Click an event to delete it or edit its description. Drag and drop to reschedule.</p>
+              <div class="form-group">
+                  <label>Client:</label>
+                  <select v-model="newAppointment.clientId" required>
+                      <option disabled value="">Select...</option>
+                      <option v-for="cl in clients" :key="cl.id" :value="cl.id">
+                        {{ cl.name }}
+                      </option>
+                  </select>
+              </div>
+              <div class="form-group flex-grow">
+                  <label>Description:</label>
+                  <input v-model="newAppointment.description" placeholder="e.g., Haircut + Beard" required />
+              </div>
           </div>
-      </section>
+          <div class="form-row">
+              <div class="form-group">
+                  <label>Start:</label>
+                  <input v-model="newAppointment.startTime" type="datetime-local" required />
+              </div>
+              <div class="form-group">
+                  <label>End:</label>
+                  <input v-model="newAppointment.endTime" type="datetime-local" required />
+              </div>
+              <div class="form-group button-container">
+                  <button type="submit" class="btn-primary">Create Appointment</button>
+              </div>
+          </div>
+      </form>
+  </div>
+
+  <div class="card calendar-section">
+      <div class="filter-controls">
+          <label><strong>Filter by Worker:</strong> </label>
+          <select v-model="selectedWorkerId" @change="handleWorkerChange">
+              <option value="">View all workers</option>
+              <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                {{ emp.title }}
+              </option>
+          </select>
+      </div>
+      <hr>
+      <FullCalendar 
+          ref="fullCalendarRef"
+          :options="calendarOptions"
+          class="full-calendar-custom"
+      />
+  </div>
+</section>
 
     </div>
   </div>
@@ -153,27 +172,35 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; 
 import api from '../services/api'; 
 
-// États globaux
 const currentTab = ref('users'); 
 const fullCalendarRef = ref(null);
 const isDarkMode = ref(false);
 const toggleTheme = () => { isDarkMode.value = !isDarkMode.value; };
 
-// États Users
 const users = ref([]);
-const newUser = reactive({ username: '', email: '', password: '', users_type: '' });
-const currentSort = ref('id'); 
+const newUser = reactive({ 
+    email: '', 
+    password: '', 
+    users_type: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    address: '',
+    hourlyRate: '' 
+});const currentSort = ref('id'); 
 const currentSortDir = ref('asc'); 
 
-// États Planning
 const employees = ref([]);
 const clients = ref([]);
-const selectedEmployeeId = ref('');
-const newAppointment = reactive({ employeeId: '', clientId: '', startTime: '', endTime: '', description: '' });
+const selectedWorkerId = ref(''); 
+const newAppointment = reactive({ 
+    workerId: '', 
+    clientId: '', 
+    startTime: '', 
+    endTime: '', 
+    description: '' 
+});
 
-// ---------------------------------------------------
-// FONCTIONS REFORMATÉES (Lignes respectées)
-// ---------------------------------------------------
 
 const fetchUsers = async () => {
   try {
@@ -204,23 +231,33 @@ const sort = (s) => {
     currentSortDir.value = 'asc';
   }
 };
-
 const addUser = async () => {
   try {
     const res = await api.post('/admin/users', newUser);
-    users.value.push({ ...res.data, isEditing: false });
-    alert(`User ${res.data.username} added successfully!`);
-    Object.assign(newUser, { username: '', email: '', password: '', users_type: '' });
+    const userForDisplay = {
+        id: res.data.userId,          
+        email: newUser.email,       
+        users_type: newUser.users_type,
+        isEditing: false
+    };
+
+    users.value.push(userForDisplay);
+
+    alert('User created successfully!');
+    
+    Object.assign(newUser, { 
+        email: '', password: '', users_type: '', 
+        firstName: '', lastName: '', address: '', phone: '', hourlyRate: '' 
+    });
+
   } catch (error) {
     console.error(error);
     alert(error.response?.data?.message || 'Error adding user');
   }
 };
-
 const saveUser = async (user) => {
   try {
     await api.put(`/admin/users/${user.id}`, { 
-        username: user.username, 
         email: user.email, 
         users_type: user.users_type 
     });
@@ -242,26 +279,6 @@ const deleteUser = async (id) => {
   }
 };
 
-const loadDropdownData = async () => {
-  try {
-    const resUsers = await api.get('/admin/users');
-    employees.value = resUsers.data
-        .filter(u => u.users_type === 'employee' || u.users_type === 'admin')
-        .map(u => ({ id: u.id, title: u.username }));
-    
-    const resClients = await api.get('/admin/clients').catch(() => ({ data: [] }));
-    if (resClients.data.length > 0) {
-        clients.value = resClients.data.map(c => ({ id: c.id, name: c.username }));
-    } else {
-        clients.value = resUsers.data
-            .filter(u => u.users_type === 'client')
-            .map(u => ({ id: u.id, name: u.username }));
-    }
-  } catch (e) {
-    console.error('Error loading planning data', e);
-  }
-};
-
 const switchToPlanning = async () => {
   currentTab.value = 'planning';
   await loadDropdownData();
@@ -270,47 +287,80 @@ const switchToPlanning = async () => {
   }, 50);
 };
 
+
+const loadDropdownData = async () => {
+  try {
+    const resWorkers = await api.get('/admin/workers');
+    employees.value = resWorkers.data.map(w => ({
+        id: w.Worker_ID, 
+        title: `${w.Worker_FirstName} ${w.Worker_LastName}`
+    }));
+    
+    const resClients = await api.get('/admin/clients'); 
+    clients.value = resClients.data.map(c => ({
+        id: c.Client_ID, 
+        name: `${c.Client_FirstName} ${c.Client_LastName}`
+    }));
+
+  } catch (e) {
+    console.error('Error loading planning data (Workers/Clients)', e);
+  }
+};
+
+
+
 const addAppointment = async () => {
   try {
-    if (!newAppointment.employeeId || !newAppointment.clientId || !newAppointment.startTime || !newAppointment.endTime) {
+    if (!newAppointment.workerId || !newAppointment.clientId || !newAppointment.startTime || !newAppointment.endTime) {
         return alert("Please fill in all required fields.");
     }
+    
     await api.post('/admin/appointments', { 
         ...newAppointment, 
-        employeeId: Number(newAppointment.employeeId), 
+        workerId: Number(newAppointment.workerId), 
         clientId: Number(newAppointment.clientId) 
     });
+    
     alert('Appointment created successfully!');
     if (fullCalendarRef.value) fullCalendarRef.value.getApi().refetchEvents();
+    
     newAppointment.description = '';
     newAppointment.clientId = '';
   } catch (e) {
     console.error(e);
-    alert('Error creating appointment. Please check the dates.');
+    alert('Error creating appointment.');
   }
 };
 
 const fetchCalendarEvents = async (info, successCallback, failureCallback) => {
   try {
     let url = '/admin/appointments';
-    if (selectedEmployeeId.value) url += `?employeeId=${selectedEmployeeId.value}`;
+    if (selectedWorkerId.value) url += `?workerId=${selectedWorkerId.value}`;
+    
     const res = await api.get(url);
-    const events = res.data.map(appt => ({ 
-        id: String(appt.id), 
-        title: `${appt.client ? appt.client.username : 'Unknown Client'} ${appt.description ? '- ' + appt.description : ''}`, 
-        start: appt.startTime, 
-        end: appt.endTime, 
-        backgroundColor: (String(appt.employeeId) === String(selectedEmployeeId.value)) ? '#2ecc71' : '#3498db', 
-        borderColor: '#2c3e50', 
-        extendedProps: { description: appt.description } 
-    }));
+    
+    const events = res.data.map(appt => {
+        const clientName = appt.client 
+            ? `${appt.client.Client_FirstName} ${appt.client.Client_LastName}` 
+            : 'Unknown Client';
+            
+        return { 
+            id: String(appt.id), 
+            title: `${clientName} ${appt.description ? '- ' + appt.description : ''}`, 
+            start: appt.startTime, 
+            end: appt.endTime, 
+            backgroundColor: (String(appt.Worker_ID) === String(selectedWorkerId.value)) ? '#2ecc71' : '#3498db', 
+            borderColor: '#2c3e50', 
+            extendedProps: { description: appt.description } 
+        };
+    });
     successCallback(events);
   } catch (e) {
     failureCallback(e);
   }
 };
 
-const handleEmployeeChange = () => {
+const handleWorkerChange = () => {
   if (fullCalendarRef.value) fullCalendarRef.value.getApi().refetchEvents();
 };
 
@@ -376,12 +426,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* =======================================
-   CSS VARIABLES & THEME CONFIGURATION
-   =======================================
-*/
 
-/* 1. NOUVEAU WRAPPER GLOBAL */
+
 .page-wrapper {
     /* Light Theme */
     --bg-main: #f4f6f9;
@@ -396,16 +442,13 @@ onMounted(() => {
     --tab-inactive-bg: #f1f1f1;
     --tab-inactive-text: #7f8c8d;
 
-    /* Force la page à prendre tout l'écran */
     background-color: var(--bg-main);
     color: var(--text-primary);
     transition: background-color 0.3s, color 0.3s;
     
-    /* Padding pour remplacer le margin de l'enfant */
     padding: 40px 20px;
     box-sizing: border-box;
     
-    /* Fix pour le défilement horizontal */
     overflow-x: hidden;
 }
 
@@ -424,13 +467,11 @@ onMounted(() => {
     --tab-inactive-text: #aaaaaa;
 }
 
-/* 2. CONTENEUR CENTRÉ */
 .admin-dashboard-container {
     max-width: 1200px; 
     margin: 0 auto;
 }
 
-/* --- HEADER --- */
 .header-row {
     display: flex;
     justify-content: space-between;
@@ -456,7 +497,6 @@ onMounted(() => {
 }
 .theme-toggle-btn:hover { transform: scale(1.05); }
 
-/* --- TABS --- */
 .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); }
 .tabs button { 
     padding: 12px 25px; 
@@ -476,7 +516,6 @@ onMounted(() => {
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1); 
 }
 
-/* --- CARDS --- */
 .card { 
     background: var(--bg-card); 
     padding: 20px; 
@@ -489,7 +528,6 @@ onMounted(() => {
 h2, h3 { color: var(--text-primary); margin-top: 0; }
 .hint-text { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px; font-style: italic; }
 
-/* --- FORMS --- */
 .inline-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto; gap: 10px; align-items: center; }
 .appointment-form { display: flex; flex-direction: column; gap: 15px; }
 .form-row { display: flex; gap: 20px; flex-wrap: wrap; }
@@ -513,7 +551,6 @@ input:focus, select:focus {
 
 .edit-input { width: 90%; padding: 5px; }
 
-/* --- TABLE --- */
 .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
 .data-table th, .data-table td { 
     padding: 12px 15px; 
@@ -539,7 +576,6 @@ input:focus, select:focus {
 .badge.employee { background: #3498db; color: white; }
 .badge.client { background: #2ecc71; color: white; }
 
-/* --- BUTTONS --- */
 .btn-primary { 
     background-color: #27ae60; 
     color: white; 
@@ -556,12 +592,10 @@ input:focus, select:focus {
 .btn-icon { border: none; background: none; cursor: pointer; font-size: 1.2rem; margin: 0 5px; transition: transform 0.2s; }
 .btn-icon:hover { transform: scale(1.2); }
 
-/* --- PLANNING & CALENDAR --- */
 .filter-controls { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; color: var(--text-primary); }
 .full-calendar-custom { margin-top: 20px; min-height: 600px; }
 .hint { margin-top: 10px; font-style: italic; color: var(--text-secondary); font-size: 0.9rem; text-align: center; }
 
-/* --- FULLCALENDAR DARK MODE OVERRIDES --- */
 :deep(.fc) {
     --fc-page-bg-color: var(--bg-card);
     --fc-neutral-bg-color: var(--bg-main);

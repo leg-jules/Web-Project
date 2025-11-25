@@ -52,29 +52,38 @@
 <script setup>
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '../../services/api'; // Ensure this path is correct
+import api from '../../services/api'; 
 
 const form = reactive({ email: '', password: '' });
 const router = useRouter();
 
 const submit = async () => {
   try {
-    const response = await api.post('/auth/login', form);
-    
-    // Access the role safely
-    const userRole = response.data.user?.role || response.data.role; 
-    
-    if (userRole) {
-        localStorage.setItem('userRole', userRole);
-        console.log("User role detected:", userRole); 
 
-        if (userRole === 'admin') {
-        // alert(`Welcome Admin! Redirecting...`); // Optional alert
-        router.push('/admin-planning');
-        } else if (userRole === 'employee') {
-        router.push('/employee-dashboard');
-        } else if (userRole === 'client') {
-        router.push('/client-dashboard');
+    const response = await api.post('/auth/login', form);
+    console.log("test:", response.data);
+
+$    console.log("Server Response:", response.data);
+
+
+    const User_Role = response.data.role; 
+    
+    
+    if (User_Role) {
+        localStorage.setItem('userRole', User_Role);
+        console.log("User role detected:", User_Role); 
+
+        if (User_Role === 'admin') {
+            router.push('/admin-planning');
+        } 
+        else if (User_Role === 'worker') { 
+            router.push('/employee-dashboard');
+        } 
+        else if (User_Role === 'client') {
+            router.push('/client-dashboard');
+        } 
+        else if (User_Role === 'manager') {
+            router.push('/manager-dashboard');
         } else {
         alert(`Login successful, but you do not have an assigned role.`); 
         }
@@ -83,15 +92,17 @@ const submit = async () => {
     }
 
   } catch (e) {
-    console.error(e);
-    alert(e?.response?.data?.message || 'Login failed. Please check your credentials.'); 
-  }
+  console.log("ERROR FULL RESPONSE:", e.response);
+  console.log("ERROR DATA:", e?.response?.data);
+  console.log("ERROR MESSAGE:", e?.message);
+  alert(e?.response?.data?.error || e?.response?.data?.message || 'Login failed. Please check your credentials.');
+}
+
 };
 </script>
 
 <style scoped>
-/* --- LAYOUT & BACKGROUND --- */
-.login-container {
+$.login-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -103,8 +114,7 @@ const submit = async () => {
   padding: 20px;
 }
 
-/* --- CARD DESIGN --- */
-.login-card {
+$.login-card {
   background: white;
   width: 100%;
   max-width: 420px;
@@ -116,7 +126,6 @@ const submit = async () => {
   border: 1px solid #f1f5f9;
 }
 
-/* --- HEADER --- */
 .header {
   text-align: center;
   margin-bottom: 30px;
@@ -181,7 +190,6 @@ label {
   color: #94a3b8;
 }
 
-/* --- BUTTON --- */
 .btn-submit {
   margin-top: 10px;
   background-color: #3b82f6;
@@ -203,7 +211,6 @@ label {
   transform: scale(0.98);
 }
 
-/* --- FOOTER --- */
 .footer {
   margin-top: 25px;
   text-align: center;
@@ -229,7 +236,6 @@ label {
   font-size: 0.85rem;
 }
 
-/* --- DECORATION (BLOBS) --- */
 .blob {
   position: absolute;
   border-radius: 50%;

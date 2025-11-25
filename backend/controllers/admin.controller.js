@@ -1,30 +1,35 @@
-// Fichier : controllers/admin.controller.js
-const { User, Appointment } = require('../models');
+const db = require('../models'); 
+const User = db.User;
+const Appointment = db.Appointment;
+const Client = db.Client;
+const Worker = db.Worker;
 const bcrypt = require('bcrypt');
 
-// --- GESTION DES UTILISATEURS (Users, Employés, Clients) ---
-
-// LECTURE : Récupérer tous les utilisateurs
 exports.getUsers = async (req, res) => {
-    try {
-        console.log(`[AUDIT] Admin ${req.user.id} fetching user list...`);
-        const users = await User.findAll({
-            attributes: ['id', 'username', 'email', 'users_type', 'createdAt'],
-            order: [['id', 'ASC']]
-        });
-        res.json(users);
-    } catch (err) {
-        console.error('[ERROR] Error fetching users:', err.message);
-        res.status(500).json({ message: 'Failed to retrieve users.' });
-    }
+  try {
+    const users = await User.findAll({
+      attributes: ['User_ID', 'User_Email', 'User_Role'],
+      order: [['User_ID', 'ASC']]
+    });
+
+    res.json(users.map(u => ({
+      id: u.User_ID,
+      email: u.User_Email,
+      users_type: u.User_Role
+    })));
+
+  } catch (err) {
+    console.error('[ERROR] Error fetching users:', err.message);
+    res.status(500).json({ message: 'Failed to retrieve users.' });
+  }
 };
 
-// LECTURE SPÉCIFIQUE : Récupérer uniquement les clients
+
 exports.getClients = async (req, res) => {
     try {
         const clients = await User.findAll({
-            where: { users_type: 'client' },
-            attributes: ['id', 'username', 'email'] // On récupère 'username' qui sert de nom
+            where: { User_Role: 'client' },
+            attributes: ['User_ID', 'User_Email', 'User_Role'] 
         });
         res.json(clients);
     } catch (err) {
@@ -33,157 +38,286 @@ exports.getClients = async (req, res) => {
     }
 };
 
-// CRÉATION : Ajouter un nouvel utilisateur
 exports.createUser = async (req, res) => {
-    try {
-        const { username, email, password, users_type } = req.body;
+    const t = await db.sequelize.transaction();
 
-        if (!username || !email || !password || !users_type) {
-            return res.status(400).json({ message: 'Missing required fields.' });
+    try {
+        console.log("👉 [START] createUser request received");
+        
+        const { 
+            email, 
+            password, 
+            users_type, 
+            firstName, 
+            lastName, 
+            address, 
+            phone, 
+            hourlyRate 
+        } = req.body;
+
+        console.log("[DEBUG] Payload:", { email, users_type, lastName });
+
+        if (!email || !password || !users_type) {
+            await t.rollback();
+            return res.status(400).json({ message: 'Missing required fields (email, password, role).' });
         }
 
-        // Nettoyage crucial pour la validation ENUM/String
-        const sanitized_users_type = users_type.toLowerCase().trim();
-
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
-            return res.status(409).json({ message: 'User with this email already exists.' });
+        if ((users_type === 'client' || users_type === 'worker') && (!firstName || !lastName)) {
+            await t.rollback();
+            return res.status(400).json({ message: 'First Name and Last Name are required for this role.' });
         }
 
         const hash = await bcrypt.hash(password, 10);
-        const user = await User.create({ 
-            username, 
-            email, 
-            passwordHash: hash, 
-            users_type: sanitized_users_type 
-        });
 
-        console.log(`[POST SUCCESS] New user created: ID ${user.id}`);
+        const user = await User.create({ 
+            User_Email: email,
+            User_Password: hash,
+            User_Role: users_type 
+        }, { transaction: t });
+
+        console.log(`[USER CREATED] ID: ${user.User_ID}`);
+
+        if (users_type === 'client') {
+            await Client.create({
+                Client_LastName: lastName,
+                Client_FirstName: firstName,
+                Client_Address: address || 'N/A',
+                Client_Phone: phone || 'N/A',
+                Client_HourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
+                User_ID: user.User_ID
+            }, { transaction: t });
+            
+            console.log(`[CLIENT PROFILE] Linked to User ${user.User_ID}`);
+
+        } else if (users_type === 'worker') {
+            await Worker.create({
+                Worker_LastName: lastName,
+                Worker_FirstName: firstName,
+                Worker_Address: address || 'N/A',
+                Worker_Phone: phone || 'N/A',
+                User_ID: user.User_ID
+            }, { transaction: t });
+
+            console.log(`[WORKER PROFILE] Linked to User ${user.User_ID}`);
+        }
+        await t.commit();
 
         res.status(201).json({ 
-            id: user.id, 
-            username: user.username, 
-            email: user.email, 
-            users_type: user.users_type 
+            message: 'User and profile created successfully!',
+            userId: user.User_ID,
+            role: user.User_Role
         });
+
     } catch (err) {
-        if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
-            const errors = err.errors.map(e => e.message);
-            return res.status(400).json({ message: errors.join(', ') });
+        await t.rollback();
+        
+        console.error("[ERROR] Create User Failed:", err);
+
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ message: 'User with this email already exists.' });
         }
-        console.error('[ERROR] Critical error creating user:', err);
-        res.status(500).json({ message: 'Failed to create user.' });
+        
+        res.status(500).json({ message: 'Failed to create user.', error: err.message });
     }
 };
 
-// MODIFICATION : Mettre à jour un utilisateur
 exports.updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { username, email, users_type, password } = req.body;
+        const { email, users_type, password } = req.body; 
+
         const user = await User.findByPk(id);
 
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
         const updates = {};
-        if (username) updates.username = username;
-        if (email) updates.email = email;
-        if (users_type) updates.users_type = users_type.toLowerCase().trim();
-        if (password) updates.passwordHash = await bcrypt.hash(password, 10);
+
+        if (email) updates.User_Email = email;
+
+        if (users_type) updates.User_Role = users_type.toLowerCase().trim();
+
+        if (password) updates.User_Password = await bcrypt.hash(password, 10);
 
         await user.update(updates);
+
         console.log(`[PUT SUCCESS] User ID ${id} updated.`);
         res.json({ message: 'User updated successfully.' });
+
     } catch (err) {
         console.error('[ERROR] Update failed:', err);
-        res.status(500).json({ message: 'Failed to update user.' });
+        res.status(500).json({ message: 'Failed to update user: ' + err.message });
     }
 };
 
-// SUPPRESSION : Supprimer un utilisateur
 exports.deleteUser = async (req, res) => {
     try {
-        const { id } = req.params;
-        const result = await User.destroy({ where: { id } });
-        if (!result) return res.status(404).json({ message: 'User not found.' });
-        res.json({ message: 'User deleted successfully.' });
+        const { id } = req.params; 
+        const deleted = await User.destroy({
+            where: { User_ID: id } 
+        });
+
+        if (deleted) {
+            console.log(`[DELETE SUCCESS] User ID ${id} deleted.`);
+            return res.status(200).json({ message: 'User deleted successfully.' });
+        }
+        
+        throw new Error('User not found');
+
     } catch (err) {
         console.error('[ERROR] Delete failed:', err);
         res.status(500).json({ message: 'Failed to delete user.' });
     }
 };
 
-// --- GESTION DES RENDEZ-VOUS (Appointments) ---
+exports.createAppointment = async (req, res) => {
+    console.log("[START] createAppointment request received");
 
-// LECTURE : Récupérer les rendez-vous (avec filtre optionnel)
+    try {
+        console.log("[DEBUG] Raw req.body:", req.body);
+
+        const { workerId, clientId, startTime, endTime, description } = req.body;
+
+        console.log(`[DEBUG] Extracted variables: 
+            - workerId: ${workerId} (${typeof workerId})
+            - clientId: ${clientId} (${typeof clientId})
+            - startTime: ${startTime}
+            - endTime: ${endTime}
+        `);
+
+        if (!workerId || !clientId || !startTime || !endTime) {
+            console.warn("[WARN] Validation failed: Some fields are missing.");
+            return res.status(400).json({ message: 'Missing required appointment fields.' });
+        }
+
+        const newAppointmentData = {
+            Worker_ID: workerId,
+            Client_ID: clientId,
+            Appointment_DateStart: startTime, 
+            Appointment_DateEnd: endTime,
+            Appointment_Description: description
+        };
+
+        console.log("[DEBUG] Attempting to insert into DB with object:", newAppointmentData);
+
+        const appointment = await Appointment.create(newAppointmentData);
+
+        console.log(`[SUCCESS] Appointment created. Database ID: ${appointment.Appointment_ID}`);
+        
+        res.status(201).json(appointment);
+
+    } catch (err) {
+        console.error("[ERROR] CRITICAL DATABASE ERROR");
+        console.error("---------------------------------------------------");
+        console.error("Error Name:", err.name);
+        console.error("Error Message:", err.message);
+        
+        if (err.parent) {
+            console.error("SQL Message:", err.parent.sqlMessage);
+            console.error("SQL Query:", err.parent.sql);
+        }
+        console.error("---------------------------------------------------");
+
+        res.status(500).json({ message: 'Failed to create appointment.', error: err.message });
+    }
+};
 exports.getAppointments = async (req, res) => {
     try {
-        const { employeeId } = req.query; 
+        const { workerId } = req.query;
         const whereClause = {};
-        if (employeeId) whereClause.employeeId = employeeId;
+        
+        if (workerId) whereClause.Worker_ID = workerId;
 
         const appointments = await Appointment.findAll({
             where: whereClause,
-            // Jointure pour récupérer le nom du client
-            include: [{ 
-                model: User, 
-                as: 'client', // Doit matcher models/index.js
-                attributes: ['username'] 
-            }]
+            include: [
+                { model: Client, as: 'client', attributes: ['Client_FirstName', 'Client_LastName'] },
+                { model: Worker, as: 'worker', attributes: ['Worker_FirstName', 'Worker_LastName'] }
+            ]
         });
-        res.json(appointments);
+
+        const formattedAppointments = appointments.map(appt => ({
+            id: appt.Appointment_ID,
+            startTime: appt.Appointment_DateStart,
+            endTime: appt.Appointment_DateEnd,
+            description: appt.Appointment_Description,
+            Worker_ID: appt.Worker_ID,
+            client: appt.client, 
+            worker: appt.worker
+        }));
+
+        res.json(formattedAppointments);
     } catch (err) {
         console.error('[ERROR] Error fetching appointments:', err);
         res.status(500).json({ message: 'Failed to retrieve appointments.' });
     }
 };
 
-// CRÉATION : Ajouter un rendez-vous
-exports.createAppointment = async (req, res) => {
-    try {
-        const { employeeId, clientId, startTime, endTime, description } = req.body;
 
-        if (!employeeId || !clientId || !startTime || !endTime) {
-            return res.status(400).json({ message: 'Missing required appointment fields.' });
-        }
-
-        const appointment = await Appointment.create({
-            employeeId, clientId, startTime, endTime, description
-        });
-
-        console.log(`[APPOINTMENT CREATE] Created ID ${appointment.id}`);
-        res.status(201).json(appointment);
-    } catch (err) {
-        console.error('[ERROR] Database creation failed:', err);
-        res.status(500).json({ message: 'Failed to create appointment.' });
-    }
-};
-
-// MODIFICATION : Déplacer ou changer un rendez-vous
 exports.updateAppointment = async (req, res) => {
     try {
         const { id } = req.params;
         const { startTime, endTime, description } = req.body;
         
-        const appointment = await Appointment.findByPk(id);
+        const appointment = await Appointment.findOne({ 
+            where: { Appointment_ID: id } 
+        });
+
         if (!appointment) return res.status(404).json({ message: 'Appointment not found.' });
 
-        await appointment.update({ startTime, endTime, description });
+        const updates = {};
+        if (startTime) updates.Appointment_DateStart = startTime;
+        if (endTime) updates.Appointment_DateEnd = endTime;
+        if (description !== undefined) updates.Appointment_Description = description;
+
+        await appointment.update(updates);
+        
+        console.log(`[UPDATE SUCCESS] Appointment ID ${id} updated.`);
         res.json({ message: 'Appointment updated.' });
+
     } catch (err) {
         console.error('[ERROR] Update appointment failed:', err);
         res.status(500).json({ message: 'Failed to update appointment.' });
     }
 };
 
-// SUPPRESSION : Effacer un rendez-vous
 exports.deleteAppointment = async (req, res) => {
     try {
-        const { id } = req.params;
-        await Appointment.destroy({ where: { id } });
-        res.json({ message: 'Appointment deleted.' });
+        const { id } = req.params; 
+
+        const deleted = await Appointment.destroy({ 
+            where: { Appointment_ID: id } 
+        });
+
+        if (deleted) {
+            console.log(`[DELETE SUCCESS] Appointment ID ${id} deleted.`);
+            return res.json({ message: 'Appointment deleted.' });
+        }
+        
+        return res.status(404).json({ message: 'Appointment not found.' });
+
     } catch (err) {
         console.error('[ERROR] Delete appointment failed:', err);
         res.status(500).json({ message: 'Failed to delete appointment.' });
     }
+};
+
+
+exports.getAllWorkers = async (req, res) => {
+  try {
+    const workers = await Worker.findAll();
+    res.status(200).json(workers);
+  } catch (error) {
+    console.error("[ERROR] Error retrieving workers:", error);
+    res.status(500).json({ message: "Error retrieving workers." });
+  }
+};
+
+exports.getAllClients = async (req, res) => {
+  try {
+    const clients = await Client.findAll();
+    res.status(200).json(clients);
+  } catch (error) {
+    console.error("[ERROR] Error retrieving clients:", error);
+    res.status(500).json({ message: "Error retrieving clients." });
+  }
 };

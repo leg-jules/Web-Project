@@ -78,14 +78,12 @@
 </template>
 
 <script setup>
-// No JS logic required for styling
 </script>
 
 <style scoped>
-/* --- 1. GENERAL CONFIG --- */
 .home-container {
   min-height: 100vh;
-  background-color: #f8f9fc; /* Light SaaS background */
+  background-color: #f8f9fc;
   font-family: 'Segoe UI', Inter, sans-serif;
   color: #1e293b;
   position: relative;
@@ -94,7 +92,6 @@
   flex-direction: column;
 }
 
-/* --- 2. NAVIGATION --- */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -132,7 +129,6 @@
 }
 .btn-register-small:hover { transform: translateY(-2px); }
 
-/* --- 3. HERO SECTION --- */
 .hero-section {
   flex: 1;
   display: grid;
@@ -143,7 +139,6 @@
   z-index: 5;
 }
 
-/* Text Content */
 .text-content { max-width: 600px; }
 
 .badge {
@@ -166,7 +161,7 @@ h1 {
 }
 
 .highlight {
-  color: #3b82f6; /* Main blue */
+  color: #3b82f6;
   background: linear-gradient(120deg, #dbeafe 0%, #dbeafe 100%);
   background-repeat: no-repeat;
   background-size: 100% 30%;
@@ -208,7 +203,6 @@ h1 {
 
 .trust-badges { display: flex; gap: 20px; font-size: 0.9rem; color: #64748b; }
 
-/* --- 4. CSS ILLUSTRATION (CALENDAR) --- */
 .visual-content {
   position: relative;
   display: flex;
@@ -261,7 +255,6 @@ h1 {
 .green { background: #ecfdf5; color: #10b981; border-left: 4px solid #10b981; }
 .orange { background: #fff7ed; color: #f97316; border-left: 4px solid #f97316; }
 
-/* Floating Notification Card */
 .notification-card {
   position: absolute;
   bottom: -20px;
@@ -282,7 +275,6 @@ h1 {
 .notif-text strong { font-size: 0.9rem; color: #1e293b; }
 .notif-text small { font-size: 0.75rem; color: #64748b; }
 
-/* --- 5. ANIMATIONS & DECORATION --- */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-15px); }
@@ -292,7 +284,6 @@ h1 {
 .floating { animation: float 6s ease-in-out infinite; }
 .floating-delayed { animation: float 6s ease-in-out 3s infinite; }
 
-/* Background Blobs */
 .blob {
   position: absolute;
   border-radius: 50%;
@@ -303,12 +294,11 @@ h1 {
 .blob-1 { width: 400px; height: 400px; background: #dbeafe; top: -100px; right: -100px; }
 .blob-2 { width: 300px; height: 300px; background: #f3e8ff; bottom: 0; left: -50px; }
 
-/* Mobile Responsive */
 @media (max-width: 900px) {
   .hero-section { grid-template-columns: 1fr; text-align: center; padding-top: 40px; }
   h1 { font-size: 2.5rem; }
   .cta-group { justify-content: center; }
   .trust-badges { justify-content: center; margin-bottom: 40px; }
-  .visual-content { display: none; /* Hide large calendar on mobile for simplicity */ }
+  .visual-content { display: none; }
 }
 </style>

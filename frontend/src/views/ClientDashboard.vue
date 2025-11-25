@@ -33,7 +33,7 @@
                       <label>Professionnel</label>
                       <select v-model="newAppointment.employeeId" required>
                           <option disabled value="">-- Choisir --</option>
-                          <option v-for="emp in employees" :key="emp.id" :value="emp.id">👤 {{ emp.username }}</option>
+                          <option v-for="emp in employees" :key="emp.id" :value="emp.id">👤 {{ emp.name }}</option>
                       </select>
                   </div>
                   <div class="form-group">
@@ -86,11 +86,9 @@ onMounted(() => {
     loadEmployees();
 });
 
-// --- NOUVELLES ROUTES API ---
 
 const loadEmployees = async () => {
     try {
-        // Appel à la route CLIENT
         const res = await api.get('/client/employees');
         employees.value = res.data;
     } catch (e) { console.error("Erreur chargement employés", e); }
@@ -98,7 +96,6 @@ const loadEmployees = async () => {
 
 const fetchClientEvents = async (info, successCallback, failureCallback) => {
     try {
-        // Appel à la route CLIENT (retourne déjà filtré par le backend)
         const res = await api.get('/client/appointments');
         
         const myEvents = res.data.map(appt => ({
@@ -116,7 +113,6 @@ const fetchClientEvents = async (info, successCallback, failureCallback) => {
 
 const requestAppointment = async () => {
     try {
-        // Plus besoin d'envoyer clientId, le backend le prend du token
         await api.post('/client/appointments', {
             employeeId: Number(newAppointment.employeeId),
             startTime: newAppointment.startTime,
@@ -160,7 +156,6 @@ const calendarOptions = reactive({
 </script>
 
 <style scoped>
-/* (Même style que précédemment) */
 .page-wrapper {
     --bg-main: #f4f6f9;
     --bg-card: #ffffff;

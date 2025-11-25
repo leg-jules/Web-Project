@@ -11,18 +11,6 @@
       <form @submit.prevent="submit" class="register-form">
         
         <div class="form-group">
-          <label for="username">Username</label>
-          <input 
-            id="username"
-            v-model="form.username" 
-            type="text" 
-            placeholder="JohnDoe" 
-            required 
-            class="input-field"
-          />
-        </div>
-
-        <div class="form-group">
           <label for="email">Email Address</label>
           <input 
             id="email"
@@ -64,17 +52,17 @@
 
 <script setup>
 import { reactive } from 'vue';
-import { useRouter } from 'vue-router'; // Import router for redirection
+import { useRouter } from 'vue-router'; 
 import api from '../../services/api';
 
-const form = reactive({ username: '', email: '', password: '' });
+const form = reactive({ email: '', password: '' });
 const router = useRouter();
 
 const submit = async () => {
   try {
     await api.post('/auth/register', form);
     alert('Registration successful! Please log in.');
-    router.push('/login'); // Redirect to login page after success
+    router.push('/login'); 
   } catch (e) {
     console.error(e);
     alert(e?.response?.data?.error || 'Registration failed. Please try again.');
@@ -83,7 +71,6 @@ const submit = async () => {
 </script>
 
 <style scoped>
-/* --- LAYOUT & BACKGROUND --- */
 .register-container {
   min-height: 100vh;
   display: flex;
@@ -96,7 +83,6 @@ const submit = async () => {
   padding: 20px;
 }
 
-/* --- CARD DESIGN --- */
 .register-card {
   background: white;
   width: 100%;
@@ -109,7 +95,6 @@ const submit = async () => {
   border: 1px solid #f1f5f9;
 }
 
-/* --- HEADER --- */
 .header {
   text-align: center;
   margin-bottom: 30px;
@@ -174,10 +159,9 @@ label {
   color: #94a3b8;
 }
 
-/* --- BUTTON --- */
 .btn-submit {
   margin-top: 10px;
-  background-color: #0f172a; /* Darker button for Register differentiation */
+  background-color: #0f172a; 
   color: white;
   padding: 14px;
   border: none;
@@ -222,7 +206,6 @@ label {
   font-size: 0.85rem;
 }
 
-/* --- DECORATION (BLOBS) --- */
 .blob {
   position: absolute;
   border-radius: 50%;

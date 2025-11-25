@@ -1,42 +1,46 @@
 module.exports = (sequelize, DataTypes) => {
     const Appointment = sequelize.define('Appointment', {
-        id: { 
-            type: DataTypes.INTEGER, 
-            primaryKey: true, 
-            autoIncrement: true 
-        },
-        employeeId: {
+        Appointment_ID: { 
             type: DataTypes.INTEGER,
-            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true
         },
-        clientId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
+        Appointment_DateStart: { 
+            type: DataTypes.DATE,
+            allowNull: false
         },
-        description: {
+        Appointment_DateEnd: { 
+            type: DataTypes.DATE,
+            allowNull: false
+        },
+        Appointment_Description: { 
             type: DataTypes.STRING(255),
-            allowNull: true,
+            allowNull: true
         },
-        startTime: {
-            type: DataTypes.DATE,
+        Worker_ID: {
+            type: DataTypes.INTEGER,
             allowNull: false,
+            references: {
+                model: 'Workers', 
+                key: 'Worker_ID'
+            }
         },
-        endTime: {
-            type: DataTypes.DATE,
+        Client_ID: {
+            type: DataTypes.INTEGER,
             allowNull: false,
-        },
+            references: {
+                model: 'Clients',
+                key: 'Client_ID'
+            }
+        }
     }, {
-        tableName: 'appointments',
-        timestamps: true
+        tableName: 'Appointments', 
+        timestamps: false 
     });
 
-    // --- PARTIE CRUCIALE À ACTIVER ---
-    Appointment.associate = function(models) {
-        // L'alias 'as: "client"' est OBLIGATOIRE car le contrôleur l'utilise
-        Appointment.belongsTo(models.User, { foreignKey: 'clientId', as: 'client' });
-        
-        // Optionnel mais utile pour filtrer par employé plus tard
-        Appointment.belongsTo(models.User, { foreignKey: 'employeeId', as: 'employee' });
+    Appointment.associate = (models) => {
+        Appointment.belongsTo(models.Worker, { foreignKey: 'Worker_ID', as: 'worker' });
+        Appointment.belongsTo(models.Client, { foreignKey: 'Client_ID', as: 'client' });
     };
 
     return Appointment;
