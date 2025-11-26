@@ -63,7 +63,7 @@ const submit = async () => {
     const response = await api.post('/auth/login', form);
     console.log("test:", response.data);
 
-$    console.log("Server Response:", response.data);
+    console.log("Server Response:", response.data);
 
 
     const User_Role = response.data.role; 

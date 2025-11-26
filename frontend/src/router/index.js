@@ -26,7 +26,7 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated = !!currentUserRole; 
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-$    return next({ path: '/login' });
+    return next({ path: '/login' });
   } 
   
   if (to.meta.requiredRole) {
