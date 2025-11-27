@@ -19,4 +19,6 @@ router.get('/workers', adminController.getAllWorkers);
 
 router.get('/clients', adminController.getAllClients);
 
+router.get('/financials', adminController.getFinancialStats);
+
 module.exports = router;

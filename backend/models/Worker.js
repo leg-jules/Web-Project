@@ -19,9 +19,12 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false
   });
 
-  Worker.associate = (models) => {
+Worker.associate = (models) => {
     Worker.belongsTo(models.User, { foreignKey: 'User_ID' });
+    Worker.hasMany(models.Appointment, { 
+        foreignKey: 'Worker_ID', 
+        as: 'appointments'
+    });
   };
-
   return Worker;
 };

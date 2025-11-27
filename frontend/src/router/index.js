@@ -6,6 +6,7 @@ import Login from '../components/Auth/Login.vue';
 
 import AdminPlanning from '../views/AdminPlanning.vue';
 import ClientDashboard from '../views/ClientDashboard.vue';
+import WorkerDashboard from '../views/WorkerDashboard.vue';
 
 const routes = [
   { path: '/', component: Home },
@@ -13,7 +14,8 @@ const routes = [
   { path: '/login', component: Login },
   
   { path: '/admin-planning', component: AdminPlanning, meta: { requiresAuth: true, requiredRole: 'admin' } },
-  { path: '/client-dashboard', component: ClientDashboard, meta: { requiresAuth: true, requiredRole: 'client' } }
+  { path: '/client-dashboard', component: ClientDashboard, meta: { requiresAuth: true, requiredRole: 'client' } },
+  { path: '/worker-dashboard', component: WorkerDashboard, meta: { requiresAuth: true, requiredRole: 'worker' } }
 ];
 
 const router = createRouter({

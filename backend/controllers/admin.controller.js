@@ -4,6 +4,8 @@ const Appointment = db.Appointment;
 const Client = db.Client;
 const Worker = db.Worker;
 const bcrypt = require('bcrypt');
+const puppeteer = require('puppeteer');
+const { Op } = require('sequelize'); 
 
 exports.getUsers = async (req, res) => {
   try {
@@ -42,7 +44,7 @@ exports.createUser = async (req, res) => {
     const t = await db.sequelize.transaction();
 
     try {
-        console.log("👉 [START] createUser request received");
+        console.log("[START] createUser request received");
         
         const { 
             email, 
@@ -230,9 +232,8 @@ exports.getAppointments = async (req, res) => {
         const appointments = await Appointment.findAll({
             where: whereClause,
             include: [
-                { model: Client, as: 'client', attributes: ['Client_FirstName', 'Client_LastName'] },
-                { model: Worker, as: 'worker', attributes: ['Worker_FirstName', 'Worker_LastName'] }
-            ]
+                { model: Client, as: 'client', attributes: ['Client_FirstName', 'Client_LastName', 'Client_Phone', 'Client_Address'] },
+                { model: Worker, as: 'worker', attributes: ['Worker_FirstName', 'Worker_LastName', 'Worker_Phone'] }            ]
         });
 
         const formattedAppointments = appointments.map(appt => ({
@@ -321,3 +322,47 @@ exports.getAllClients = async (req, res) => {
     res.status(500).json({ message: "Error retrieving clients." });
   }
 };
+
+
+exports.getFinancialStats = async (req, res) => {
+    try {
+        const appointments = await Appointment.findAll({
+            include: [
+                { model: Client, as: 'client', attributes: ['Client_FirstName', 'Client_LastName', 'Client_HourlyRate'] },
+                { model: Worker, as: 'worker', attributes: ['Worker_FirstName', 'Worker_LastName'] }
+            ]
+        });
+
+        const billingData = appointments.map(appt => {
+            const start = new Date(appt.Appointment_DateStart);
+            const end = new Date(appt.Appointment_DateEnd);
+            const durationHours = (end - start) / (1000 * 60 * 60); 
+
+            const clientRate = appt.client?.Client_HourlyRate ? parseFloat(appt.client.Client_HourlyRate) : 50; 
+            const invoiceAmount = (durationHours * clientRate).toFixed(2);
+
+            const workerRate = 30; 
+            const wageAmount = (durationHours * workerRate).toFixed(2);
+
+            return {
+                id: appt.Appointment_ID,
+                date: start.toISOString().split('T')[0],
+                description: appt.Appointment_Description,
+                clientName: appt.client ? `${appt.client.Client_FirstName} ${appt.client.Client_LastName}` : 'Inconnu',
+                workerName: appt.worker ? `${appt.worker.Worker_FirstName} ${appt.worker.Worker_LastName}` : 'Inconnu',
+                duration: durationHours.toFixed(2) + ' h',
+                invoiceAmount: invoiceAmount, 
+                wageAmount: wageAmount,      
+                status: (new Date() > end) ? 'Terminé' : 'À venir' 
+            };
+        });
+
+        res.json(billingData);
+
+    } catch (err) {
+        console.error('[ERROR] Financial Stats:', err);
+        res.status(500).json({ message: 'Erreur calculs financiers.' });
+    }
+};
+
+

@@ -46,12 +46,13 @@ exports.getMyAppointments = async (req, res) => {
             }]
         });
 
-        const formattedApps = appointments.map(appt => ({
+     const formattedApps = appointments.map(appt => ({
             id: appt.Appointment_ID,
             startTime: appt.Appointment_DateStart,
             endTime: appt.Appointment_DateEnd,
             description: appt.Appointment_Description,
-            employeeName: appt.worker ? `${appt.worker.Worker_FirstName} ${appt.worker.Worker_LastName}` : 'Inconnu'
+            employeeName: appt.worker ? `${appt.worker.Worker_FirstName} ${appt.worker.Worker_LastName}` : 'Inconnu',
+            hourlyRate: clientProfile.Client_HourlyRate || 0 
         }));
 
         res.json(formattedApps);

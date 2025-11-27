@@ -121,7 +121,6 @@ h2 {
   font-size: 0.95rem;
 }
 
-/* --- FORM --- */
 .register-form {
   display: flex;
   flex-direction: column;
@@ -180,7 +179,6 @@ label {
   transform: scale(0.98);
 }
 
-/* --- FOOTER --- */
 .footer {
   margin-top: 25px;
   text-align: center;

@@ -77,7 +77,7 @@ const submit = async () => {
             router.push('/admin-planning');
         } 
         else if (User_Role === 'worker') { 
-            router.push('/employee-dashboard');
+            router.push('/worker-dashboard');
         } 
         else if (User_Role === 'client') {
             router.push('/client-dashboard');
@@ -102,7 +102,7 @@ const submit = async () => {
 </script>
 
 <style scoped>
-$.login-container {
+.login-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -114,7 +114,7 @@ $.login-container {
   padding: 20px;
 }
 
-$.login-card {
+.login-card {
   background: white;
   width: 100%;
   max-width: 420px;
@@ -152,7 +152,6 @@ h2 {
   font-size: 0.95rem;
 }
 
-/* --- FORM --- */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -169,6 +168,7 @@ label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #334155;
+  text-align: left;
 }
 
 .input-field {
@@ -179,6 +179,8 @@ label {
   transition: all 0.2s;
   outline: none;
   background-color: #fff;
+  width: 100%; 
+  box-sizing: border-box;
 }
 
 .input-field:focus {
@@ -201,6 +203,7 @@ label {
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
+  width: 100%; 
 }
 
 .btn-submit:hover {

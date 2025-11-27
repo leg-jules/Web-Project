@@ -8,7 +8,7 @@ const { sequelize } = require('./models');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const clientRoutes = require('./routes/client');
-
+const workerRoutes = require('./routes/worker');
 const app = express();
 
 
@@ -43,6 +43,7 @@ app.use(session({
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/client', clientRoutes);
+app.use('/api/worker', workerRoutes);
 
 
 const PORT = process.env.PORT || 4000;
